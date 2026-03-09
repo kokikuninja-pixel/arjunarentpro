@@ -1,0 +1,22 @@
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Izinkan unggahan ke folder 'documents' umum, yang digunakan
+    // selama proses pembuatan invoice sebelum ID invoice ada.
+    // Tambahkan validasi ukuran file.
+    match /documents/{allPaths=**} {
+      allow read, write: if isSignedIn() && request.resource.size < 5 * 1024 * 1024; // Limit to 5MB
+    }
+
+    // Aturan yang ada untuk dokumen yang sudah terikat dengan invoice.
+    match /invoices/{invoiceId}/documents/{allPaths=**} {
+      allow read, write: if isSignedIn() && request.resource.size < 5 * 1024 * 1024; // Limit to 5MB
+    }
+  }
+}
